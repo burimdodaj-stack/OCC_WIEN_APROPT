@@ -51,10 +51,41 @@
     background: var(--panel); border: 1px solid var(--line);
     border-radius: 4px; padding: 32px; margin-bottom: 24px;
   }
+  .card-head {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 16px;
+    flex-wrap: wrap; gap: 12px;
+  }
   .card h2 {
     font-family: "Fraunces", serif; font-size: 20px;
-    margin: 0 0 16px 0; font-weight: 600;
+    margin: 0; font-weight: 600;
   }
+  .refresh-btn {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--line); padding: 8px 14px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s ease;
+    border-radius: 2px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .refresh-btn:hover {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .refresh-btn .spin { display: inline-block; }
+  .refresh-btn.loading .spin { animation: spin 1s linear infinite; }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .last-updated {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-top: 4px;
+  }
+
   .trigger-btn {
     width: 100%; background: var(--accent); color: var(--bg);
     border: none; padding: 22px 28px;
@@ -104,7 +135,6 @@
   .progress-status.error { color: var(--red); }
   .progress-status.success { color: var(--green); }
 
-  /* ─── Tab-Buttons für Panda-Auswahl ───────────────────────────── */
   .panda-tabs {
     display: flex; gap: 8px; margin-bottom: 20px;
     flex-wrap: wrap;
@@ -121,15 +151,13 @@
     border-radius: 2px;
   }
   .panda-tab:hover {
-    border-color: var(--accent);
-    color: var(--ink);
+    border-color: var(--accent); color: var(--ink);
   }
   .panda-tab.active {
     background: var(--accent); color: var(--bg);
     border-color: var(--accent);
   }
 
-  /* ─── Chart Container ─────────────────────────────────────────── */
   .chart-container {
     position: relative;
     width: 100%;
@@ -140,10 +168,10 @@
     padding: 16px;
   }
 
-  /* ─── Stats Cards unter dem Graph ─────────────────────────────── */
+  /* Stats: jetzt nur noch 2 Boxen */
   .stats-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     margin-top: 16px;
   }
@@ -164,17 +192,30 @@
     font-size: 22px; font-weight: 800;
     color: var(--accent);
   }
-  .stat-value.diff-positive { color: var(--green); }
-  .stat-value.diff-negative { color: var(--red); }
 
-  .chart-loading {
-    text-align: center; color: var(--muted);
-    font-size: 13px; padding: 40px 0;
+  .chart-message {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 90%;
   }
-  .chart-error {
-    text-align: center; color: var(--red);
-    font-size: 13px; padding: 40px 0;
+  .chart-loading { color: var(--muted); font-size: 13px; }
+  .chart-error   { color: var(--red);   font-size: 13px; }
+  .chart-error small {
+    display: block; margin-top: 8px;
+    color: var(--muted); font-size: 11px;
   }
+  .retry-btn {
+    margin-top: 14px;
+    background: var(--accent); color: var(--bg);
+    border: none; padding: 10px 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; border-radius: 2px;
+  }
+  .retry-btn:hover { background: var(--accent-2); color: var(--ink); }
 
   .sheet-frame {
     width: 100%; height: 640px;
@@ -194,30 +235,20 @@
     letter-spacing: 0.1em; text-transform: uppercase;
   }
 
-  /* ─── Mobile Optimierung ──────────────────────────────────────── */
   @media (max-width: 640px) {
     body { padding: 20px 12px; }
     .card { padding: 20px; }
     .panda-tabs { gap: 6px; }
     .panda-tab {
-      padding: 10px 8px;
-      font-size: 11px;
-      min-width: 60px;
+      padding: 10px 8px; font-size: 11px; min-width: 60px;
     }
-    .chart-container {
-      height: 320px;
-      padding: 10px;
-    }
-    .stats-row {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
+    .chart-container { height: 320px; padding: 10px; }
+    .stats-row { grid-template-columns: 1fr; gap: 8px; }
     .stat-value { font-size: 20px; }
     .sheet-frame { height: 480px; }
-    .trigger-btn {
-      padding: 18px 20px;
-      font-size: 14px;
-    }
+    .trigger-btn { padding: 18px 20px; font-size: 14px; }
+    .card-head { flex-direction: column; align-items: flex-start; }
+    .refresh-btn { align-self: stretch; justify-content: center; }
   }
 </style>
 </head>
@@ -231,7 +262,6 @@
     <p class="subtitle">Scraped automatisch den aktuellen und nächsten Monat aus dem Admin-Panel und schreibt die Daten direkt in dein Google Sheet.</p>
   </header>
 
-  <!-- ─── Trigger Button + Progress ───────────────────────────────── -->
   <div class="card">
     <h2>Scraper starten</h2>
 
@@ -252,9 +282,17 @@
     </div>
   </div>
 
-  <!-- ─── INTERAKTIVER GRAPH ──────────────────────────────────────── -->
   <div class="card">
-    <h2>Auslastung vs. Ziel</h2>
+    <div class="card-head">
+      <div>
+        <h2>Auslastung vs. Ziel</h2>
+        <div class="last-updated" id="lastUpdated">Lade ...</div>
+      </div>
+      <button id="refreshBtn" class="refresh-btn">
+        <span class="spin">↻</span>
+        <span>Aktualisieren</span>
+      </button>
+    </div>
 
     <div class="panda-tabs" id="pandaTabs">
       <button class="panda-tab active" data-panda="all">Panda All</button>
@@ -264,27 +302,22 @@
     </div>
 
     <div class="chart-container">
-      <div id="chartLoading" class="chart-loading">Lade Daten aus dem Sheet ...</div>
+      <div id="chartMessage" class="chart-message chart-loading">Lade Daten aus dem Sheet ...</div>
       <canvas id="occChart" style="display:none;"></canvas>
     </div>
 
     <div class="stats-row" id="statsRow">
       <div class="stat-box">
-        <div class="stat-label">Ø Auslastung</div>
+        <div class="stat-label">Auslastung</div>
         <div class="stat-value" id="statAvgOcc">—</div>
       </div>
       <div class="stat-box">
-        <div class="stat-label">Ø Ziel</div>
+        <div class="stat-label">Ziel</div>
         <div class="stat-value" id="statAvgTarget">—</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Differenz</div>
-        <div class="stat-value" id="statDiff">—</div>
       </div>
     </div>
   </div>
 
-  <!-- ─── Eingebettetes Sheet ─────────────────────────────────────── -->
   <div class="card">
     <h2>Live-Ergebnis</h2>
     <iframe
@@ -306,13 +339,21 @@
   // ═══════════════════════════════════════════════════════════════════════
   const WORKER_URL = "https://occ-wien-proxy.burim-dodaj.workers.dev";
 
-  // Sheet als CSV — gleiches Sheet, gleicher gid wie die published-URL
   const SHEET_ID   = "1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0";
   const SHEET_GID  = "1418262514";
-  const CSV_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
 
-  // Welche Spalten gehören zu welchem Panda?
-  // (Spalte A = Index 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7, I = 8)
+  const CSV_SOURCES = [
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`,
+    `https://docs.google.com/spreadsheets/d/e/2PACX-1vTNx5KCMaGnTYMYQtSlUTCWYL8GspBS6R71EeVl1wfXL4hIsGpSf16z5EhyVzzf-j74G8db9Mr7VIG2/pub?gid=${SHEET_GID}&single=true&output=csv`,
+  ];
+
+  const FETCH_TIMEOUT_MS = 15000;
+  const MAX_RETRIES      = 3;
+  const RETRY_DELAY_MS   = 2000;
+  const AUTO_REFRESH_MS  = 5 * 60 * 1000;
+
+  // Hinweis: Sheet hat 2 Header-Zeilen (Zeile 1 = Gesamt-Werte, Zeile 2 = "Day | Panda 1 | Goal | ...")
+  // Daten beginnen ab Zeile 3 → CSV-Index 2
   const PANDA_CONFIG = {
     "all": { name: "Panda All", occCol: 7, targetCol: 8 },  // H, I
     "1":   { name: "Panda 1",   occCol: 1, targetCol: 2 },  // B, C
@@ -321,7 +362,7 @@
   };
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SCRAPER TRIGGER (wie vorher)
+  // SCRAPER TRIGGER
   // ═══════════════════════════════════════════════════════════════════════
   const btn          = document.getElementById("triggerBtn");
   const progressWrap = document.getElementById("progressWrap");
@@ -404,11 +445,9 @@
 
         if (data.conclusion === "success") {
           setProgress(100, "✓ Scraping fertig — Daten sind im Sheet!", "success");
-          // Sheet-iframe neu laden
           const iframe = document.querySelector(".sheet-frame");
           iframe.src = iframe.src;
-          // Graph neu laden
-          loadChartData();
+          setTimeout(() => loadChartData(true), 3000);
         } else {
           setProgress(100, `✗ Workflow fehlgeschlagen: ${data.conclusion}`, "error");
         }
@@ -426,13 +465,45 @@
   btn.addEventListener("click", triggerWorkflow);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // GRAPH — Daten aus Sheet laden & rendern
+  // GRAPH — Robuster Loader (ohne AbortController, das verursachte Probleme)
   // ═══════════════════════════════════════════════════════════════════════
   let chartInstance = null;
-  let sheetData = null;  // gecachte CSV-Zeilen
+  let sheetData = null;
   let currentPanda = "all";
+  let autoRefreshTimer = null;
 
-  // Simpler CSV-Parser (handhabt Anführungszeichen)
+  // Fetch mit Timeout via Promise.race (statt AbortController — der hatte den Bug)
+  function fetchWithTimeout(url, timeoutMs) {
+    return Promise.race([
+      fetch(url, { cache: "no-store" }).then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout nach " + timeoutMs + "ms")), timeoutMs)
+      )
+    ]);
+  }
+
+  async function tryFetchCSV(baseUrl, maxRetries) {
+    let lastErr = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const url = baseUrl + (baseUrl.includes("?") ? "&" : "?") + "_=" + Date.now();
+        const text = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
+        if (text.length < 10) throw new Error("Leere Antwort");
+        return text;
+      } catch (err) {
+        lastErr = err;
+        console.warn(`Versuch ${attempt}/${maxRetries} fehlgeschlagen:`, err.message);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
+        }
+      }
+    }
+    throw lastErr;
+  }
+
   function parseCSV(text) {
     const rows = [];
     let row = [], field = "", inQuotes = false;
@@ -454,7 +525,6 @@
     return rows;
   }
 
-  // Wert aus Zelle parsen — entfernt %, , und macht zu Number
   function parseValue(s) {
     if (s == null) return null;
     let t = String(s).trim();
@@ -464,11 +534,22 @@
     return isNaN(n) ? null : n;
   }
 
-  // Datum-Zelle formatieren
+  // Zeigt den Rohwert aus der Zelle (z.B. "77,37%") direkt an, wenn möglich
+  function displayCell(s) {
+    if (s == null) return "—";
+    const t = String(s).trim();
+    if (t === "" || t === "-" || t === "#N/A") return "—";
+    // Wenn schon ein % drin ist, einfach so anzeigen
+    if (t.includes("%")) return t;
+    // Sonst als Zahl mit % darstellen
+    const n = parseValue(t);
+    if (n == null) return t;
+    return n.toFixed(2) + "%";
+  }
+
   function formatDate(s) {
     if (!s) return "";
     const t = String(s).trim();
-    // Versuche Date.parse — wenn's klappt: schön formatieren
     const d = new Date(t);
     if (!isNaN(d.getTime())) {
       const dd = String(d.getDate()).padStart(2, "0");
@@ -478,55 +559,86 @@
     return t;
   }
 
-  async function loadChartData() {
-    const loadingEl = document.getElementById("chartLoading");
+  function setLastUpdated() {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    document.getElementById("lastUpdated").textContent = `Aktualisiert: ${hh}:${mm} Uhr`;
+  }
+
+  function showChartMessage(html, cls) {
+    const messageEl = document.getElementById("chartMessage");
     const canvasEl  = document.getElementById("occChart");
-
-    loadingEl.style.display = "block";
-    loadingEl.textContent = "Lade Daten aus dem Sheet ...";
-    loadingEl.classList.remove("chart-error");
-    loadingEl.classList.add("chart-loading");
+    messageEl.innerHTML = html;
+    messageEl.className = "chart-message " + cls;
+    messageEl.style.display = "block";
     canvasEl.style.display = "none";
+  }
 
-    try {
-      // Cache-Buster damit nach Scraper-Lauf frische Daten kommen
-      const res = await fetch(CSV_URL + "&_=" + Date.now());
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const text = await res.text();
-      sheetData = parseCSV(text);
+  async function loadChartData(silent = false) {
+    const refreshBtn = document.getElementById("refreshBtn");
+    refreshBtn.classList.add("loading");
+    refreshBtn.disabled = true;
 
-      if (sheetData.length < 2) {
-        throw new Error("Keine Daten im Sheet gefunden");
-      }
-
-      renderChart(currentPanda);
-    } catch (err) {
-      console.error("Sheet-Load-Fehler:", err);
-      loadingEl.classList.remove("chart-loading");
-      loadingEl.classList.add("chart-error");
-      loadingEl.textContent = "Fehler beim Laden: " + err.message;
+    if (!silent) {
+      showChartMessage("Lade Daten aus dem Sheet ...", "chart-loading");
     }
+
+    let lastErr = null;
+    for (let i = 0; i < CSV_SOURCES.length; i++) {
+      try {
+        const text = await tryFetchCSV(CSV_SOURCES[i], MAX_RETRIES);
+        sheetData = parseCSV(text);
+        if (sheetData.length < 3) throw new Error("Sheet hat zu wenig Daten");
+
+        renderChart(currentPanda);
+        setLastUpdated();
+        refreshBtn.classList.remove("loading");
+        refreshBtn.disabled = false;
+        return;
+      } catch (err) {
+        console.error(`CSV-Quelle ${i + 1} fehlgeschlagen:`, err);
+        lastErr = err;
+      }
+    }
+
+    refreshBtn.classList.remove("loading");
+    refreshBtn.disabled = false;
+    showChartMessage(
+      `Fehler beim Laden: ${lastErr ? lastErr.message : "Unbekannter Fehler"}
+       <small>Pr&uuml;fe deine Internet-Verbindung oder ob das Sheet &ouml;ffentlich freigegeben ist.</small>
+       <button class="retry-btn" onclick="loadChartData()">Erneut versuchen</button>`,
+      "chart-error"
+    );
   }
 
   function renderChart(pandaKey) {
     const cfg = PANDA_CONFIG[pandaKey];
     if (!cfg || !sheetData) return;
 
-    // Zeilen 2..63 => Index 1..62 (Zeile 1 ist Header)
+    // ─── STATS aus Zeile 1 (Index 0) holen ─────────────────────────
+    // Zeile 1 = "Gesamt | 77,37% | 90,00% | ..."
+    const summaryRow = sheetData[0] || [];
+    const summaryOcc    = summaryRow[cfg.occCol];
+    const summaryTarget = summaryRow[cfg.targetCol];
+
+    document.getElementById("statAvgOcc").textContent    = displayCell(summaryOcc);
+    document.getElementById("statAvgTarget").textContent = displayCell(summaryTarget);
+
+    // ─── Tagesdaten ab Zeile 3 (Index 2) ───────────────────────────
     const labels = [];
     const occData = [];
     const targetData = [];
 
-    for (let i = 1; i < Math.min(sheetData.length, 63); i++) {
+    for (let i = 2; i < Math.min(sheetData.length, 64); i++) {
       const row = sheetData[i] || [];
-      const dateCell = row[0];      // Spalte A
+      const dateCell = row[0];
       const occCell  = row[cfg.occCol];
       const tgtCell  = row[cfg.targetCol];
 
       const occVal = parseValue(occCell);
       const tgtVal = parseValue(tgtCell);
 
-      // Skip Zeilen ohne Datum oder ohne beide Werte
       if (!dateCell || (occVal == null && tgtVal == null)) continue;
 
       labels.push(formatDate(dateCell));
@@ -534,45 +646,14 @@
       targetData.push(tgtVal);
     }
 
-    // Stats berechnen
-    const avg = arr => {
-      const filtered = arr.filter(v => v != null);
-      if (filtered.length === 0) return null;
-      return filtered.reduce((a, b) => a + b, 0) / filtered.length;
-    };
-    const avgOcc    = avg(occData);
-    const avgTarget = avg(targetData);
-    const diff      = (avgOcc != null && avgTarget != null) ? avgOcc - avgTarget : null;
-
-    const fmt = v => v == null ? "—" : v.toFixed(1) + "%";
-    const fmtDiff = v => {
-      if (v == null) return "—";
-      const sign = v >= 0 ? "+" : "";
-      return sign + v.toFixed(1) + "%";
-    };
-
-    document.getElementById("statAvgOcc").textContent    = fmt(avgOcc);
-    document.getElementById("statAvgTarget").textContent = fmt(avgTarget);
-
-    const diffEl = document.getElementById("statDiff");
-    diffEl.textContent = fmtDiff(diff);
-    diffEl.className = "stat-value";
-    if (diff != null) {
-      if (diff >= 0) diffEl.classList.add("diff-positive");
-      else diffEl.classList.add("diff-negative");
-    }
-
     // Chart anzeigen
-    document.getElementById("chartLoading").style.display = "none";
+    document.getElementById("chartMessage").style.display = "none";
     const canvasEl = document.getElementById("occChart");
     canvasEl.style.display = "block";
 
-    // Bestehende Instanz zerstören
     if (chartInstance) chartInstance.destroy();
 
     const ctx = canvasEl.getContext("2d");
-
-    // Gradient für Auslastung
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, "rgba(244, 197, 66, 0.35)");
     gradient.addColorStop(1, "rgba(244, 197, 66, 0)");
@@ -673,22 +754,38 @@
     });
   }
 
-  // Tab-Buttons verkabeln
   document.querySelectorAll(".panda-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".panda-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
       currentPanda = tab.dataset.panda;
-      if (sheetData) {
-        renderChart(currentPanda);
-      } else {
-        loadChartData();
-      }
+      if (sheetData) renderChart(currentPanda);
+      else loadChartData();
     });
   });
 
-  // Initialer Load beim Seitenaufruf
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    loadChartData();
+  });
+
+  function startAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    autoRefreshTimer = setInterval(() => {
+      loadChartData(true);
+    }, AUTO_REFRESH_MS);
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    } else {
+      loadChartData(true);
+      startAutoRefresh();
+    }
+  });
+
   loadChartData();
+  startAutoRefresh();
 </script>
 
 </body>
