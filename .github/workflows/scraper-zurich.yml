@@ -1,0 +1,44 @@
+name: OCC Zürich Scraper
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [run-occ-zh]
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright gspread google-auth beautifulsoup4
+          playwright install --with-deps chromium
+
+      - name: Write credentials.json from secret
+        run: |
+          echo "$GOOGLE_CREDENTIALS" > credentials.json
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Run scraper
+        env:
+          PANDA_USER: ${{ secrets.PANDA_USER }}
+          PANDA_PASS: ${{ secrets.PANDA_PASS }}
+        run: python scraper_zurich.py
+
+      - name: Upload debug artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots-zurich
+          path: debug/
+          if-no-files-found: ignore
