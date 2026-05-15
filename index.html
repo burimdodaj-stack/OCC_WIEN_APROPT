@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OCC Wien Scraper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-2: #111827;
+    --panel: #151b2e;
+    --line: #2a3349;
+    --ink: #e8ecf5;
+    --muted: #8a93ad;
+    --accent: #f4c542;
+    --accent-2: #ff6b35;
+    --green: #4ade80;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(244, 197, 66, 0.08), transparent 60%),
+      radial-gradient(800px 500px at -10% 100%, rgba(255, 107, 53, 0.07), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font-family: "JetBrains Mono", monospace;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 20px;
+  }
+  .container { width: 100%; max-width: 880px; }
+  header { margin-bottom: 40px; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px;
+  }
+  h1 {
+    font-family: "Fraunces", serif; font-weight: 800;
+    font-size: clamp(34px, 6vw, 56px); line-height: 1.05;
+    margin: 0 0 12px 0; letter-spacing: -0.02em;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .subtitle { color: var(--muted); font-size: 14px; max-width: 520px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 4px; padding: 32px; margin-bottom: 24px;
+  }
+  .card h2 {
+    font-family: "Fraunces", serif; font-size: 20px;
+    margin: 0 0 16px 0; font-weight: 600;
+  }
+  .trigger-btn {
+    width: 100%; background: var(--accent); color: var(--bg);
+    border: none; padding: 22px 28px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 16px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; cursor: pointer;
+    transition: all 0.2s ease; border-radius: 2px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .trigger-btn:hover:not(:disabled) {
+    background: var(--accent-2); color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(244, 197, 66, 0.25);
+  }
+  .trigger-btn:disabled {
+    background: var(--line); color: var(--muted); cursor: not-allowed;
+  }
+  .trigger-btn .arrow { font-size: 22px; transition: transform 0.2s ease; }
+  .trigger-btn:hover:not(:disabled) .arrow { transform: translateX(6px); }
+  .progress-wrap { margin-top: 28px; display: none; }
+  .progress-wrap.active { display: block; }
+  .progress-head {
+    display: flex; justify-content: space-between;
+    align-items: baseline; margin-bottom: 10px;
+  }
+  .progress-label {
+    font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--muted);
+  }
+  .progress-percent {
+    font-family: "Fraunces", serif; font-size: 28px;
+    font-weight: 800; color: var(--accent);
+  }
+  .progress-track {
+    width: 100%; height: 8px; background: var(--bg-2);
+    border-radius: 999px; overflow: hidden; border: 1px solid var(--line);
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 999px; transition: width 0.6s ease;
+  }
+  .progress-status {
+    margin-top: 14px; font-size: 13px;
+    color: var(--ink); min-height: 20px;
+  }
+  .progress-status.error { color: var(--red); }
+  .progress-status.success { color: var(--green); }
+  .sheet-frame {
+    width: 100%; height: 640px;
+    border: 1px solid var(--line); border-radius: 4px;
+    background: var(--bg-2);
+  }
+  .open-link {
+    display: inline-block; margin-top: 14px;
+    color: var(--accent); text-decoration: none;
+    font-size: 13px;
+    border-bottom: 1px dashed var(--accent); padding-bottom: 2px;
+  }
+  .open-link:hover { color: var(--accent-2); border-color: var(--accent-2); }
+  footer {
+    margin-top: 40px; text-align: center;
+    color: var(--muted); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="eyebrow">PandaParken · Occupancy Dashboard</div>
+    <h1>OCC <em>Wien</em></h1>
+    <p class="subtitle">Scraped automatisch den aktuellen und nächsten Monat aus dem Admin-Panel und schreibt die Daten direkt in dein Google Sheet.</p>
+  </header>
+
+  <div class="card">
+    <h2>Scraper starten</h2>
+
+    <button id="triggerBtn" class="trigger-btn">
+      <span>Hole mir OCC Wien</span>
+      <span class="arrow">→</span>
+    </button>
+
+    <div id="progressWrap" class="progress-wrap">
+      <div class="progress-head">
+        <span class="progress-label">Fortschritt</span>
+        <span id="progressPercent" class="progress-percent">0%</span>
+      </div>
+      <div class="progress-track">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <div id="progressStatus" class="progress-status">Warte auf Start ...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Live-Ergebnis</h2>
+    <iframe
+      class="sheet-frame"
+      src="https://docs.google.com/spreadsheets/d/1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0/edit?usp=sharing&rm=minimal&widget=true&headers=false"
+      title="OCC Wien Sheet">
+    </iframe>
+    <a class="open-link" href="https://docs.google.com/spreadsheets/d/1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0/edit#gid=1143411637" target="_blank">
+      → In Google Sheets öffnen
+    </a>
+  </div>
+
+  <footer>Built with ☕ &nbsp;·&nbsp; GitHub Actions + Playwright</footer>
+</div>
+
+<script>
+  // ═══════════════════════════════════════════════════════════════════════
+  // NUR DIESEN EINEN WERT ANPASSEN — die URL deines Cloudflare Workers:
+  // ═══════════════════════════════════════════════════════════════════════
+  const WORKER_URL = "https://DEIN-WORKER-NAME.DEIN-CF-USER.workers.dev";
+  // Beispiel: "https://occ-wien-proxy.burim.workers.dev"
+  // ═══════════════════════════════════════════════════════════════════════
+
+  const btn          = document.getElementById("triggerBtn");
+  const progressWrap = document.getElementById("progressWrap");
+  const progressFill = document.getElementById("progressFill");
+  const progressPct  = document.getElementById("progressPercent");
+  const progressStat = document.getElementById("progressStatus");
+
+  let pollInterval = null;
+  let fakeProgressInterval = null;
+  let fakeProgress = 0;
+
+  function setProgress(percent, statusText, statusClass = "") {
+    const p = Math.max(0, Math.min(100, percent));
+    progressFill.style.width = p + "%";
+    progressPct.textContent  = Math.round(p) + "%";
+    progressStat.textContent = statusText;
+    progressStat.className   = "progress-status " + statusClass;
+  }
+
+  function resetUI() {
+    btn.disabled = false;
+    btn.querySelector("span").textContent = "Hole mir OCC Wien";
+    clearInterval(pollInterval);
+    clearInterval(fakeProgressInterval);
+    fakeProgress = 0;
+  }
+
+  async function triggerWorkflow() {
+    if (WORKER_URL.includes("DEIN-")) {
+      alert("Bitte erst WORKER_URL in der HTML (Script-Block unten) eintragen.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.querySelector("span").textContent = "Läuft ...";
+    progressWrap.classList.add("active");
+    setProgress(2, "Sende Trigger an den Worker ...");
+
+    try {
+      const res = await fetch(`${WORKER_URL}/trigger`, { method: "POST" });
+      const data = await res.json();
+
+      if (!data.ok) {
+        throw new Error(data.error || "Trigger fehlgeschlagen");
+      }
+
+      setProgress(8, "Workflow getriggert, warte auf Start ...");
+      await new Promise(r => setTimeout(r, 4000));
+
+      const latestRes = await fetch(`${WORKER_URL}/latest-run`);
+      const latestData = await latestRes.json();
+
+      if (latestData.ok && latestData.run) {
+        const runId = latestData.run.id;
+        setProgress(12, `Run #${runId} läuft ...`);
+        startFakeProgress();
+        pollInterval = setInterval(() => pollRunStatus(runId), 5000);
+      } else {
+        setProgress(10, "Run gestartet — Status nicht abrufbar. Sheet wird in ~2 Min aktualisiert.");
+        startFakeProgress();
+      }
+    } catch (err) {
+      console.error(err);
+      setProgress(0, "Fehler: " + err.message, "error");
+      resetUI();
+    }
+  }
+
+  function startFakeProgress() {
+    fakeProgressInterval = setInterval(() => {
+      if (fakeProgress < 88) {
+        fakeProgress += 1.5;
+        const realPct = 12 + fakeProgress * 0.85;
+        progressFill.style.width = realPct + "%";
+        progressPct.textContent  = Math.round(realPct) + "%";
+      }
+    }, 2000);
+  }
+
+  async function pollRunStatus(runId) {
+    try {
+      const res = await fetch(`${WORKER_URL}/run-status?id=${runId}`);
+      const data = await res.json();
+
+      if (data.status === "completed") {
+        clearInterval(pollInterval);
+        clearInterval(fakeProgressInterval);
+
+        if (data.conclusion === "success") {
+          setProgress(100, "✓ Scraping fertig — Daten sind im Sheet!", "success");
+          const iframe = document.querySelector(".sheet-frame");
+          iframe.src = iframe.src;
+        } else {
+          setProgress(100, `✗ Workflow fehlgeschlagen: ${data.conclusion}`, "error");
+        }
+        setTimeout(resetUI, 4000);
+      } else if (data.status === "in_progress") {
+        progressStat.textContent = "Scraper läuft ...";
+      } else if (data.status === "queued") {
+        progressStat.textContent = "Warte in der Queue ...";
+      }
+    } catch (e) {
+      console.error("pollRunStatus error", e);
+    }
+  }
+
+  btn.addEventListener("click", triggerWorkflow);
+</script>
+
+</body>
+</html>
