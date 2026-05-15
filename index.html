@@ -174,18 +174,35 @@
     margin-top: 4px;
   }
 
+  /* Tab-Gruppen für Wien + Zürich */
+  .tab-group {
+    margin-bottom: 12px;
+  }
+  .tab-group-label {
+    font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tab-group-label::after {
+    content: ""; flex: 1; height: 1px;
+    background: var(--line);
+  }
+  .tab-group-label.wien { color: var(--accent); }
+  .tab-group-label.zh   { color: var(--blue); }
+
   .panda-tabs {
-    display: flex; gap: 8px; margin-bottom: 20px;
+    display: flex; gap: 8px;
     flex-wrap: wrap;
   }
   .panda-tab {
-    flex: 1; min-width: 80px;
+    flex: 1; min-width: 70px;
     background: var(--bg-2); color: var(--muted);
     border: 1px solid var(--line);
-    padding: 12px 16px;
+    padding: 11px 12px;
     font-family: "JetBrains Mono", monospace;
-    font-size: 12px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
     cursor: pointer; transition: all 0.2s ease;
     border-radius: 2px;
   }
@@ -196,6 +213,13 @@
     background: var(--accent); color: var(--bg);
     border-color: var(--accent);
   }
+  .panda-tab[data-city="zh"]:hover {
+    border-color: var(--blue); color: var(--ink);
+  }
+  .panda-tab[data-city="zh"].active {
+    background: var(--blue); color: var(--bg);
+    border-color: var(--blue);
+  }
 
   .chart-container {
     position: relative;
@@ -205,6 +229,7 @@
     border: 1px solid var(--line);
     border-radius: 4px;
     padding: 16px;
+    margin-top: 16px;
   }
 
   .stats-row {
@@ -227,6 +252,7 @@
     font-size: 22px; font-weight: 800;
     color: var(--accent);
   }
+  .stat-value.zh { color: var(--blue); }
 
   .chart-message {
     position: absolute; top: 50%; left: 50%;
@@ -273,7 +299,8 @@
     .card { padding: 20px; }
     .panda-tabs { gap: 6px; }
     .panda-tab {
-      padding: 10px 8px; font-size: 11px; min-width: 60px;
+      padding: 10px 6px; font-size: 10px; min-width: 50px;
+      letter-spacing: 0.05em;
     }
     .chart-container { height: 320px; padding: 10px; }
     .stats-row { grid-template-columns: 1fr; gap: 8px; }
@@ -347,11 +374,11 @@
     </div>
   </div>
 
-  <!-- ─── Graph Wien ──────────────────────────────────────────────────── -->
+  <!-- ─── Graph Wien + Zürich ────────────────────────────────────────── -->
   <div class="card">
     <div class="card-head">
       <div>
-        <h2>Auslastung vs. Ziel — Wien</h2>
+        <h2>Auslastung vs. Ziel</h2>
         <div class="last-updated" id="lastUpdated">Lade ...</div>
       </div>
       <button id="refreshBtn" class="refresh-btn">
@@ -360,11 +387,28 @@
       </button>
     </div>
 
-    <div class="panda-tabs" id="pandaTabs">
-      <button class="panda-tab active" data-panda="all">Panda All</button>
-      <button class="panda-tab" data-panda="1">Panda 1</button>
-      <button class="panda-tab" data-panda="2">Panda 2</button>
-      <button class="panda-tab" data-panda="3">Panda 3</button>
+    <!-- Wien Tabs -->
+    <div class="tab-group">
+      <div class="tab-group-label wien">Wien</div>
+      <div class="panda-tabs">
+        <button class="panda-tab active" data-city="wien" data-panda="all">All</button>
+        <button class="panda-tab" data-city="wien" data-panda="1">P1</button>
+        <button class="panda-tab" data-city="wien" data-panda="2">P2</button>
+        <button class="panda-tab" data-city="wien" data-panda="3">P3</button>
+      </div>
+    </div>
+
+    <!-- Zürich Tabs -->
+    <div class="tab-group">
+      <div class="tab-group-label zh">Zürich</div>
+      <div class="panda-tabs">
+        <button class="panda-tab" data-city="zh" data-panda="all">All</button>
+        <button class="panda-tab" data-city="zh" data-panda="1">P1</button>
+        <button class="panda-tab" data-city="zh" data-panda="2">P2</button>
+        <button class="panda-tab" data-city="zh" data-panda="4">P4</button>
+        <button class="panda-tab" data-city="zh" data-panda="5">P5</button>
+        <button class="panda-tab" data-city="zh" data-panda="6">P6</button>
+      </div>
     </div>
 
     <div class="chart-container">
@@ -384,13 +428,13 @@
     </div>
   </div>
 
-  <!-- ─── Sheet Wien ──────────────────────────────────────────────────── -->
+  <!-- ─── Sheet ───────────────────────────────────────────────────────── -->
   <div class="card">
-    <h2>Live-Ergebnis Wien</h2>
+    <h2>Live-Ergebnis</h2>
     <iframe
       class="sheet-frame"
       src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTNx5KCMaGnTYMYQtSlUTCWYL8GspBS6R71EeVl1wfXL4hIsGpSf16z5EhyVzzf-j74G8db9Mr7VIG2/pubhtml?gid=1418262514&single=true&widget=true&headers=false"
-      title="OCC Wien Sheet">
+      title="OCC Sheet">
     </iframe>
     <a class="open-link" href="https://docs.google.com/spreadsheets/d/1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0/edit#gid=1418262514" target="_blank">
       → In Google Sheets öffnen
@@ -419,11 +463,25 @@
   const RETRY_DELAY_MS   = 2000;
   const AUTO_REFRESH_MS  = 5 * 60 * 1000;
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // SPALTEN-MAPPING
+  // ═══════════════════════════════════════════════════════════════════════
+  // Wien:  A=0 Datum | B/C=1,2 P1 | D/E=3,4 P2 | F/G=5,6 P3 | H/I=7,8 All Wien
+  // Zürich: J/K=9,10 P1 | L/M=11,12 P2 | N/O=13,14 P4 | P/Q=15,16 P5 |
+  //         R/S=17,18 P6 | T/U=19,20 All Zürich
   const PANDA_CONFIG = {
-    "all": { name: "Panda All", occCol: 7, targetCol: 8 },
-    "1":   { name: "Panda 1",   occCol: 1, targetCol: 2 },
-    "2":   { name: "Panda 2",   occCol: 3, targetCol: 4 },
-    "3":   { name: "Panda 3",   occCol: 5, targetCol: 6 },
+    // Wien
+    "wien-all": { name: "Wien · All", city: "wien", occCol: 7,  targetCol: 8  },
+    "wien-1":   { name: "Wien · P1",  city: "wien", occCol: 1,  targetCol: 2  },
+    "wien-2":   { name: "Wien · P2",  city: "wien", occCol: 3,  targetCol: 4  },
+    "wien-3":   { name: "Wien · P3",  city: "wien", occCol: 5,  targetCol: 6  },
+    // Zürich
+    "zh-all":   { name: "Zürich · All", city: "zh", occCol: 19, targetCol: 20 },
+    "zh-1":     { name: "Zürich · P1",  city: "zh", occCol: 9,  targetCol: 10 },
+    "zh-2":     { name: "Zürich · P2",  city: "zh", occCol: 11, targetCol: 12 },
+    "zh-4":     { name: "Zürich · P4",  city: "zh", occCol: 13, targetCol: 14 },
+    "zh-5":     { name: "Zürich · P5",  city: "zh", occCol: 15, targetCol: 16 },
+    "zh-6":     { name: "Zürich · P6",  city: "zh", occCol: 17, targetCol: 18 },
   };
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -510,11 +568,10 @@
 
         if (data.conclusion === "success") {
           setProgress(city, 100, "✓ Scraping fertig — Daten sind im Sheet!", "success");
-          if (city === "wien") {
-            const iframe = document.querySelector(".sheet-frame");
-            iframe.src = iframe.src;
-            setTimeout(() => loadChartData(true), 3000);
-          }
+          // Iframe + Chart neu laden (egal welche City — beide sind im selben Sheet)
+          const iframe = document.querySelector(".sheet-frame");
+          iframe.src = iframe.src;
+          setTimeout(() => loadChartData(true), 3000);
         } else {
           setProgress(city, 100, `✗ Workflow fehlgeschlagen: ${data.conclusion}`, "error");
         }
@@ -537,11 +594,11 @@
   });
 
   // ═══════════════════════════════════════════════════════════════════════
-  // GRAPH WIEN — wie vorher
+  // GRAPH — Wien + Zürich
   // ═══════════════════════════════════════════════════════════════════════
   let chartInstance = null;
   let sheetData = null;
-  let currentPanda = "all";
+  let currentKey = "wien-all";
   let autoRefreshTimer = null;
 
   function fetchWithTimeout(url, timeoutMs) {
@@ -675,7 +732,7 @@
         sheetData = parseCSV(text);
         if (sheetData.length < 3) throw new Error("Sheet hat zu wenig Daten");
 
-        renderChart(currentPanda);
+        renderChart(currentKey);
         setLastUpdated();
         refreshBtn.classList.remove("loading");
         refreshBtn.disabled = false;
@@ -696,13 +753,23 @@
     );
   }
 
-  function renderChart(pandaKey) {
-    const cfg = PANDA_CONFIG[pandaKey];
+  function renderChart(key) {
+    const cfg = PANDA_CONFIG[key];
     if (!cfg || !sheetData) return;
 
+    const isZH      = cfg.city === "zh";
+    const occColor  = isZH ? "#60a5fa" : "#f4c542";
+    const occBgFrom = isZH ? "rgba(96, 165, 250, 0.35)" : "rgba(244, 197, 66, 0.35)";
+    const occBgTo   = isZH ? "rgba(96, 165, 250, 0)"    : "rgba(244, 197, 66, 0)";
+    const tgtColor  = isZH ? "#f4c542" : "#60a5fa";
+
     const summaryRow = sheetData[0] || [];
-    $("statAvgOcc").textContent    = displayCell(summaryRow[cfg.occCol]);
-    $("statAvgTarget").textContent = displayCell(summaryRow[cfg.targetCol]);
+    const statOcc    = $("statAvgOcc");
+    const statTarget = $("statAvgTarget");
+    statOcc.textContent    = displayCell(summaryRow[cfg.occCol]);
+    statTarget.textContent = displayCell(summaryRow[cfg.targetCol]);
+    statOcc.className    = "stat-value" + (isZH ? " zh" : "");
+    statTarget.className = "stat-value" + (isZH ? "" : ""); // Ziel bleibt gelb-akzent — wir lassen es einheitlich
 
     const labels = [];
     const occData = [];
@@ -727,8 +794,8 @@
 
     const ctx = canvasEl.getContext("2d");
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, "rgba(244, 197, 66, 0.35)");
-    gradient.addColorStop(1, "rgba(244, 197, 66, 0)");
+    gradient.addColorStop(0, occBgFrom);
+    gradient.addColorStop(1, occBgTo);
 
     chartInstance = new Chart(ctx, {
       type: "line",
@@ -736,26 +803,26 @@
         labels: labels,
         datasets: [
           {
-            label: "Auslastung %",
+            label: cfg.name + " — Auslastung %",
             data: occData,
-            borderColor: "#f4c542",
+            borderColor: occColor,
             backgroundColor: gradient,
             borderWidth: 2.5,
             fill: true, tension: 0.35,
             pointRadius: 0, pointHoverRadius: 6,
-            pointHoverBackgroundColor: "#f4c542",
+            pointHoverBackgroundColor: occColor,
             pointHoverBorderColor: "#0a0e1a",
             pointHoverBorderWidth: 2,
           },
           {
             label: "Ziel %",
             data: targetData,
-            borderColor: "#60a5fa",
+            borderColor: tgtColor,
             backgroundColor: "transparent",
             borderWidth: 2, borderDash: [6, 4],
             fill: false, tension: 0.35,
             pointRadius: 0, pointHoverRadius: 5,
-            pointHoverBackgroundColor: "#60a5fa",
+            pointHoverBackgroundColor: tgtColor,
             pointHoverBorderColor: "#0a0e1a",
             pointHoverBorderWidth: 2,
           }
@@ -778,7 +845,7 @@
           tooltip: {
             backgroundColor: "#111827",
             borderColor: "#2a3349", borderWidth: 1,
-            titleColor: "#f4c542", bodyColor: "#e8ecf5",
+            titleColor: occColor, bodyColor: "#e8ecf5",
             titleFont: { family: "JetBrains Mono", size: 13, weight: "700" },
             bodyFont:  { family: "JetBrains Mono", size: 12 },
             padding: 12,
@@ -815,12 +882,15 @@
     });
   }
 
+  // Tab-Klicks: erstelle Key aus city + panda
   document.querySelectorAll(".panda-tab").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".panda-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
-      currentPanda = tab.dataset.panda;
-      if (sheetData) renderChart(currentPanda);
+      const city  = tab.dataset.city;
+      const panda = tab.dataset.panda;
+      currentKey  = `${city}-${panda}`;
+      if (sheetData) renderChart(currentKey);
       else loadChartData();
     });
   });
