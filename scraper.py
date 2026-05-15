@@ -70,13 +70,108 @@ def login(page):
     print("  ✓ Eingeloggt")
 
 
+def save_debug(page, label):
+    """Speichert Screenshot + HTML, damit wir bei Fehlern sehen was los war."""
+    try:
+        os.makedirs("debug", exist_ok=True)
+        page.screenshot(path=f"debug/{label}.png", full_page=True)
+        with open(f"debug/{label}.html", "w", encoding="utf-8") as f:
+            f.write(page.content())
+        print(f"  ⚑ Debug gespeichert: debug/{label}.png + .html")
+    except Exception as e:
+        print(f"  ! Debug-Speichern fehlgeschlagen: {e}")
+
+
 def navigate_to_capacity(page):
     print("▶ Navigiere zu Parking Capacity ...")
-    page.click("text=Parking")
-    time.sleep(1)
-    page.click("text=Parking Capacity (v2 preview)")
+
+    # Debug: was ist nach Login auf der Seite?
+    save_debug(page, "01_after_login")
+
+    # ──────────────────────────────────────────────────────────────
+    # WICHTIG: Sidebar könnte eingeklappt sein (nur Icons sichtbar).
+    # Erst das Hamburger-Menü ☰ klicken, um sie aufzuklappen.
+    # ──────────────────────────────────────────────────────────────
+    print("  → Prüfe ob Sidebar aufgeklappt werden muss ...")
+    hamburger_selectors = [
+        'button[aria-label*="menu" i]',
+        'a.sidebar-toggle',
+        'button.sidebar-toggle',
+        '.sidebar-toggle',
+        'a:has(i.fa-bars)',
+        'button:has(i.fa-bars)',
+        '[data-toggle="collapsed"]',
+        'a[href="#"]:has(i.fa-bars)',
+    ]
+
+    for sel in hamburger_selectors:
+        try:
+            el = page.locator(sel).first
+            if el.is_visible(timeout=1500):
+                el.click(timeout=3000)
+                print(f"  ✓ Sidebar-Toggle geklickt ({sel})")
+                time.sleep(1)
+                break
+        except Exception:
+            continue
+
+    save_debug(page, "02_after_sidebar_toggle")
+
+    # Versuche mehrere Strategien für "Parking"
+    parking_clicked = False
+    strategies = [
+        ('a:has-text("Parking")', "link mit Text Parking"),
+        ('text="Parking"', "exact text Parking"),
+        ('text=/^\\s*Parking\\s*$/', "regex Parking"),
+        ('li:has-text("Parking") > a', "li > a Parking"),
+        ('[href*="parking" i]', "href contains parking"),
+        ('button:has-text("Parking")', "button Parking"),
+    ]
+
+    for selector, desc in strategies:
+        try:
+            print(f"  → Versuche: {desc}")
+            page.locator(selector).first.click(timeout=5000)
+            print(f"  ✓ Geklickt mit: {desc}")
+            parking_clicked = True
+            break
+        except Exception as e:
+            print(f"    × {type(e).__name__}")
+
+    if not parking_clicked:
+        save_debug(page, "03_parking_not_found")
+        raise RuntimeError("Konnte 'Parking' im Menü nicht finden — siehe debug/")
+
+    time.sleep(2)
+    save_debug(page, "04_after_parking_click")
+
+    # Versuche "Parking Capacity (v2 preview)"
+    capacity_clicked = False
+    capacity_strategies = [
+        ('a:has-text("Parking Capacity (v2 preview)")', "exact link"),
+        ('text="Parking Capacity (v2 preview)"', "exact text"),
+        ('a:has-text("Parking Capacity")', "Parking Capacity link"),
+        ('text=/Parking Capacity.*v2/i', "regex v2"),
+        ('text=/Parking Capacity/i', "any Parking Capacity"),
+    ]
+
+    for selector, desc in capacity_strategies:
+        try:
+            print(f"  → Versuche Capacity: {desc}")
+            page.locator(selector).first.click(timeout=5000)
+            print(f"  ✓ Capacity geklickt mit: {desc}")
+            capacity_clicked = True
+            break
+        except Exception as e:
+            print(f"    × {type(e).__name__}")
+
+    if not capacity_clicked:
+        save_debug(page, "05_capacity_not_found")
+        raise RuntimeError("Konnte 'Parking Capacity' nicht finden — siehe debug/")
+
     page.wait_for_load_state("networkidle", timeout=20000)
     time.sleep(4)
+    save_debug(page, "06_capacity_page")
     print("  ✓ Capacity-Seite geladen")
 
 
