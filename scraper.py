@@ -1,12 +1,9 @@
 """
 PandaParken Occupancy Scraper - Aktueller + Nächster Monat -> Google Sheets
-===========================================================================
-1. Login auf pandaparken.work/admin (Username + Passwort)
-2. Nach Login: direkt zu pandaparken.work/capacity navigieren
-3. Capacity-Tabellen (Panda 1-4) des AKTUELLEN Monats lesen
-4. Ganz nach unten scrollen → "Next Month" Link klicken
-5. Capacity-Tabellen des NÄCHSTEN Monats lesen
-6. Alles in Google Sheets (Tab "SpezoällOCCVIE") schreiben
+==========================================================================
+1:1 die beiden funktionierenden Original-Skripte kombiniert.
+Nur Username/Passwort kommen aus GitHub Secrets (env vars).
+Daten landen im Sheet 'SpezoällOCCVIE'.
 """
 
 import os
@@ -17,14 +14,12 @@ from google.oauth2.service_account import Credentials
 from bs4 import BeautifulSoup
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
-ADMIN_URL    = "https://pandaparken.work/admin"
-CAPACITY_URL = "https://pandaparken.work/capacity"
+ADMIN_URL   = "https://pandaparken.work/admin"
+USERNAME    = os.environ["PANDA_USER"]
+PASSWORD    = os.environ["PANDA_PASS"]
 
-USERNAME     = os.environ["PANDA_USER"]   # GitHub Secret
-PASSWORD     = os.environ["PANDA_PASS"]   # GitHub Secret
-
-SHEET_ID     = "1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0"
-SHEET_NAME   = "SpezoällOCCVIE"
+SHEET_ID    = "1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0"
+SHEET_NAME  = "SpezoällOCCVIE"
 
 SERVICE_ACCOUNT_FILE = "credentials.json"
 
@@ -35,6 +30,7 @@ SCOPES = [
 
 PANDA_SECTIONS = ["Panda 1", "Panda 2", "Panda 3", "Panda 4"]
 
+# Aktueller Monat (Original-Zeilen aus Skript 1)
 CURRENT_MONTH_START_ROWS = {
     "Panda 1": 1,
     "Panda 2": 40,
@@ -42,6 +38,7 @@ CURRENT_MONTH_START_ROWS = {
     "Panda 4": 118,
 }
 
+# Nächster Monat - direkt darunter
 NEXT_MONTH_START_ROWS = {
     "Panda 1": 160,
     "Panda 2": 199,
@@ -58,20 +55,7 @@ CAPACITY_IDS = {
 # ──────────────────────────────────────────────────────────────────────────────
 
 
-def save_debug(page, label):
-    """Speichert Screenshot + HTML bei Fehlern."""
-    try:
-        os.makedirs("debug", exist_ok=True)
-        page.screenshot(path=f"debug/{label}.png", full_page=True)
-        with open(f"debug/{label}.html", "w", encoding="utf-8") as f:
-            f.write(page.content())
-        print(f"  ⚑ Debug gespeichert: debug/{label}.png + .html")
-    except Exception as e:
-        print(f"  ! Debug-Speichern fehlgeschlagen: {e}")
-
-
 def login(page):
-    """Schritt 1: Login auf pandaparken.work/admin."""
     print("▶ Öffne Login-Seite ...")
     page.goto(ADMIN_URL, wait_until="networkidle", timeout=30000)
     time.sleep(2)
@@ -82,21 +66,20 @@ def login(page):
 
     page.wait_for_load_state("networkidle", timeout=20000)
     time.sleep(2)
-    save_debug(page, "00_after_login")
     print("  ✓ Eingeloggt")
 
 
 def navigate_to_capacity(page):
-    """Schritt 2: Nach Login direkt zu /capacity."""
-    print(f"▶ Navigiere direkt zu {CAPACITY_URL} ...")
-    page.goto(CAPACITY_URL, wait_until="networkidle", timeout=30000)
+    print("▶ Navigiere zu Parking Capacity ...")
+    page.click("text=Parking")
+    time.sleep(1)
+    page.click("text=Parking Capacity (v2 preview)")
+    page.wait_for_load_state("networkidle", timeout=20000)
     time.sleep(4)
-    save_debug(page, "01_capacity_page")
     print("  ✓ Capacity-Seite geladen")
 
 
 def click_next_month(page):
-    """Schritt 4: Scrollt nach unten und klickt auf 'Next Month'."""
     print("▶ Scrolle nach unten und klicke auf 'Next Month' ...")
 
     old_html = page.content()
@@ -104,29 +87,11 @@ def click_next_month(page):
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     time.sleep(2)
 
-    next_month_strategies = [
-        'a:has-text("Next Month")',
-        'text="Next Month"',
-        'button:has-text("Next Month")',
-    ]
-
-    clicked = False
-    for sel in next_month_strategies:
-        try:
-            el = page.locator(sel).first
-            el.wait_for(timeout=5000)
-            el.scroll_into_view_if_needed()
-            time.sleep(1)
-            el.click()
-            print(f"  ✓ Geklickt mit: {sel}")
-            clicked = True
-            break
-        except Exception as e:
-            print(f"    × {sel}: {type(e).__name__}")
-
-    if not clicked:
-        save_debug(page, "02_next_month_not_found")
-        raise RuntimeError("Konnte 'Next Month' nicht klicken — siehe debug/")
+    next_month_link = page.locator("text=Next Month").first
+    next_month_link.wait_for(timeout=10000)
+    next_month_link.scroll_into_view_if_needed()
+    time.sleep(1)
+    next_month_link.click()
 
     time.sleep(2)
 
@@ -141,12 +106,15 @@ def click_next_month(page):
 
     page.wait_for_load_state("networkidle", timeout=20000)
     time.sleep(4)
-    save_debug(page, "03_next_month_page")
+
     print("  ✓ Nächster Monat geladen")
 
 
 def parse_tbody_by_id(html: str, tbody_id: str) -> list:
-    """Liest Zeilen aus einem <tbody id='capacity_X'>."""
+    """
+    Liest Zeilen aus einem <tbody id='capacity_X'>.
+    Die ID sitzt auf tbody, nicht auf table.
+    """
     soup = BeautifulSoup(html, "html.parser")
 
     tbody = soup.find("tbody", {"id": tbody_id})
@@ -234,42 +202,30 @@ def main():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1920, "height": 1080})
 
-        # 1. Login auf /admin
+        # === IDENTISCH wie Original-Skripte ===
         login(page)
-
-        # 2. Direkt zu /capacity (Session ist nach Login aktiv)
         navigate_to_capacity(page)
 
-        # ═══ AKTUELLER MONAT ═══
-        print("\n══════════════════════════════════════")
-        print("  AKTUELLER MONAT")
-        print("══════════════════════════════════════")
+        # === SCHRITT 1: Aktuellen Monat lesen ===
+        print("\n══ AKTUELLER MONAT ══")
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(2)
         page.evaluate("window.scrollTo(0, 0)")
         time.sleep(1)
         current_data = extract_all_data(page)
 
-        # ═══ NÄCHSTER MONAT ═══
-        print("\n══════════════════════════════════════")
-        print("  NÄCHSTER MONAT")
-        print("══════════════════════════════════════")
+        # === SCHRITT 2: Next Month klicken + lesen ===
+        print("\n══ NÄCHSTER MONAT ══")
         click_next_month(page)
-        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        time.sleep(2)
-        page.evaluate("window.scrollTo(0, 0)")
-        time.sleep(1)
         next_data = extract_all_data(page)
 
         browser.close()
 
-    # ═══ IN GOOGLE SHEETS SCHREIBEN ═══
-    print("\n══════════════════════════════════════")
-    print("  SCHREIBE IN GOOGLE SHEETS")
-    print("══════════════════════════════════════")
+    # === Schreiben in Sheet ===
+    print("\n▶ Schreibe in Google Sheets ...")
     worksheet.clear()
 
-    print("\n▶ Block 1: Aktueller Monat")
+    print("\n-- Block 1: Aktueller Monat --")
     for name in PANDA_SECTIONS:
         if name in current_data:
             write_to_sheet(
@@ -277,7 +233,7 @@ def main():
                 CURRENT_MONTH_START_ROWS[name], "Aktueller Monat"
             )
 
-    print("\n▶ Block 2: Nächster Monat")
+    print("\n-- Block 2: Nächster Monat --")
     for name in PANDA_SECTIONS:
         if name in next_data:
             write_to_sheet(
