@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OCC Wien Scraper</title>
+<title>OCC Wien + Zürich Scraper</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -52,23 +52,13 @@
     height: clamp(48px, 8vw, 72px);
     flex-shrink: 0;
   }
-  .panda-logo .circle {
-    fill: none;
-    stroke: var(--ink);
-    stroke-width: 4;
-  }
-  .panda-logo .ear {
-    fill: var(--ink);
-  }
-  .panda-logo .eye, .panda-logo .nose {
-    fill: var(--ink);
-  }
+  .panda-logo .circle { fill: none; stroke: var(--ink); stroke-width: 4; }
+  .panda-logo .ear { fill: var(--ink); }
+  .panda-logo .eye, .panda-logo .nose { fill: var(--ink); }
   .panda-logo .mouth {
-    fill: none;
-    stroke: var(--ink);
-    stroke-width: 3;
-    stroke-linecap: round;
+    fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round;
   }
+
   .card {
     background: var(--panel); border: 1px solid var(--line);
     border-radius: 4px; padding: 32px; margin-bottom: 24px;
@@ -82,6 +72,82 @@
     font-family: "Fraunces", serif; font-size: 20px;
     margin: 0; font-weight: 600;
   }
+
+  /* Zwei Knöpfe nebeneinander */
+  .scraper-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 640px) {
+    .scraper-row { grid-template-columns: 1fr; }
+  }
+
+  .trigger-btn {
+    width: 100%; background: var(--accent); color: var(--bg);
+    border: none; padding: 22px 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.05em;
+    text-transform: uppercase; cursor: pointer;
+    transition: all 0.2s ease; border-radius: 2px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .trigger-btn.zh {
+    background: var(--bg-2); color: var(--ink);
+    border: 1px solid var(--accent);
+  }
+  .trigger-btn:hover:not(:disabled) {
+    background: var(--accent-2); color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(244, 197, 66, 0.25);
+    border-color: var(--accent-2);
+  }
+  .trigger-btn.zh:hover:not(:disabled) {
+    background: var(--accent); color: var(--bg);
+  }
+  .trigger-btn:disabled {
+    background: var(--line); color: var(--muted); cursor: not-allowed;
+    border-color: var(--line); transform: none; box-shadow: none;
+  }
+  .trigger-btn .arrow { font-size: 20px; transition: transform 0.2s ease; }
+  .trigger-btn:hover:not(:disabled) .arrow { transform: translateX(6px); }
+
+  .progress-wrap {
+    display: none; margin-top: 16px;
+    padding: 16px; background: var(--bg-2);
+    border: 1px solid var(--line); border-radius: 2px;
+  }
+  .progress-wrap.active { display: block; }
+  .progress-head {
+    display: flex; justify-content: space-between;
+    align-items: baseline; margin-bottom: 10px;
+  }
+  .progress-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--muted);
+  }
+  .progress-percent {
+    font-family: "Fraunces", serif; font-size: 22px;
+    font-weight: 800; color: var(--accent);
+  }
+  .progress-track {
+    width: 100%; height: 6px; background: var(--bg);
+    border-radius: 999px; overflow: hidden; border: 1px solid var(--line);
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 999px; transition: width 0.6s ease;
+  }
+  .progress-status {
+    margin-top: 10px; font-size: 12px;
+    color: var(--ink); min-height: 18px;
+  }
+  .progress-status.error { color: var(--red); }
+  .progress-status.success { color: var(--green); }
+
   .refresh-btn {
     background: transparent; color: var(--muted);
     border: 1px solid var(--line); padding: 8px 14px;
@@ -107,55 +173,6 @@
     letter-spacing: 0.1em; text-transform: uppercase;
     margin-top: 4px;
   }
-
-  .trigger-btn {
-    width: 100%; background: var(--accent); color: var(--bg);
-    border: none; padding: 22px 28px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 16px; font-weight: 700; letter-spacing: 0.05em;
-    text-transform: uppercase; cursor: pointer;
-    transition: all 0.2s ease; border-radius: 2px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .trigger-btn:hover:not(:disabled) {
-    background: var(--accent-2); color: var(--ink);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(244, 197, 66, 0.25);
-  }
-  .trigger-btn:disabled {
-    background: var(--line); color: var(--muted); cursor: not-allowed;
-  }
-  .trigger-btn .arrow { font-size: 22px; transition: transform 0.2s ease; }
-  .trigger-btn:hover:not(:disabled) .arrow { transform: translateX(6px); }
-  .progress-wrap { margin-top: 28px; display: none; }
-  .progress-wrap.active { display: block; }
-  .progress-head {
-    display: flex; justify-content: space-between;
-    align-items: baseline; margin-bottom: 10px;
-  }
-  .progress-label {
-    font-size: 12px; text-transform: uppercase;
-    letter-spacing: 0.15em; color: var(--muted);
-  }
-  .progress-percent {
-    font-family: "Fraunces", serif; font-size: 28px;
-    font-weight: 800; color: var(--accent);
-  }
-  .progress-track {
-    width: 100%; height: 8px; background: var(--bg-2);
-    border-radius: 999px; overflow: hidden; border: 1px solid var(--line);
-  }
-  .progress-fill {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    border-radius: 999px; transition: width 0.6s ease;
-  }
-  .progress-status {
-    margin-top: 14px; font-size: 13px;
-    color: var(--ink); min-height: 20px;
-  }
-  .progress-status.error { color: var(--red); }
-  .progress-status.success { color: var(--green); }
 
   .panda-tabs {
     display: flex; gap: 8px; margin-bottom: 20px;
@@ -190,7 +207,6 @@
     padding: 16px;
   }
 
-  /* Stats: jetzt nur noch 2 Boxen */
   .stats-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -198,11 +214,8 @@
     margin-top: 16px;
   }
   .stat-box {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 2px;
-    padding: 14px;
-    text-align: center;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 2px; padding: 14px; text-align: center;
   }
   .stat-label {
     font-size: 10px; letter-spacing: 0.15em;
@@ -216,11 +229,9 @@
   }
 
   .chart-message {
-    position: absolute;
-    top: 50%; left: 50%;
+    position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    text-align: center;
-    width: 90%;
+    text-align: center; width: 90%;
   }
   .chart-loading { color: var(--muted); font-size: 13px; }
   .chart-error   { color: var(--red);   font-size: 13px; }
@@ -268,7 +279,7 @@
     .stats-row { grid-template-columns: 1fr; gap: 8px; }
     .stat-value { font-size: 20px; }
     .sheet-frame { height: 480px; }
-    .trigger-btn { padding: 18px 20px; font-size: 14px; }
+    .trigger-btn { padding: 18px 16px; font-size: 13px; }
     .card-head { flex-direction: column; align-items: flex-start; }
     .refresh-btn { align-self: stretch; justify-content: center; }
   }
@@ -283,49 +294,64 @@
     <h1>
       <span>OCC</span>
       <svg class="panda-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Panda Parken Logo">
-        <!-- Ohren -->
         <circle class="ear" cx="22" cy="22" r="11" />
         <circle class="ear" cx="78" cy="22" r="11" />
-        <!-- Kopf -->
         <circle class="circle" cx="50" cy="55" r="36" />
-        <!-- Augen-Patches (gefüllt) -->
         <ellipse class="eye" cx="36" cy="50" rx="7" ry="9" transform="rotate(-15 36 50)" />
         <ellipse class="eye" cx="64" cy="50" rx="7" ry="9" transform="rotate(15 64 50)" />
-        <!-- Augen-Highlights (klein, weiß) -->
         <circle cx="37" cy="49" r="2.2" fill="#0a0e1a" />
         <circle cx="63" cy="49" r="2.2" fill="#0a0e1a" />
-        <!-- Nase -->
         <ellipse class="nose" cx="50" cy="65" rx="4" ry="3" />
-        <!-- Mund -->
         <path class="mouth" d="M 46 71 Q 50 76 54 71" />
       </svg>
     </h1>
   </header>
 
+  <!-- ─── 2 Knöpfe: Wien + Zürich ─────────────────────────────────────── -->
   <div class="card">
     <h2>Scraper starten</h2>
 
-    <button id="triggerBtn" class="trigger-btn">
-      <span>Hole mir OCC Wien</span>
-      <span class="arrow">→</span>
-    </button>
+    <div class="scraper-row">
+      <button class="trigger-btn" data-city="wien">
+        <span>Hole mir OCC Wien</span>
+        <span class="arrow">→</span>
+      </button>
+      <button class="trigger-btn zh" data-city="zh">
+        <span>Hole mir OCC Zürich</span>
+        <span class="arrow">→</span>
+      </button>
+    </div>
 
-    <div id="progressWrap" class="progress-wrap">
+    <!-- Progress für Wien -->
+    <div id="progressWrap_wien" class="progress-wrap">
       <div class="progress-head">
-        <span class="progress-label">Fortschritt</span>
-        <span id="progressPercent" class="progress-percent">0%</span>
+        <span class="progress-label">Wien</span>
+        <span class="progress-percent" id="progressPercent_wien">0%</span>
       </div>
       <div class="progress-track">
-        <div id="progressFill" class="progress-fill"></div>
+        <div class="progress-fill" id="progressFill_wien"></div>
       </div>
-      <div id="progressStatus" class="progress-status">Warte auf Start ...</div>
+      <div class="progress-status" id="progressStatus_wien">Warte auf Start ...</div>
+    </div>
+
+    <!-- Progress für Zürich -->
+    <div id="progressWrap_zh" class="progress-wrap">
+      <div class="progress-head">
+        <span class="progress-label">Zürich</span>
+        <span class="progress-percent" id="progressPercent_zh">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill_zh"></div>
+      </div>
+      <div class="progress-status" id="progressStatus_zh">Warte auf Start ...</div>
     </div>
   </div>
 
+  <!-- ─── Graph Wien ──────────────────────────────────────────────────── -->
   <div class="card">
     <div class="card-head">
       <div>
-        <h2>Auslastung vs. Ziel</h2>
+        <h2>Auslastung vs. Ziel — Wien</h2>
         <div class="last-updated" id="lastUpdated">Lade ...</div>
       </div>
       <button id="refreshBtn" class="refresh-btn">
@@ -358,8 +384,9 @@
     </div>
   </div>
 
+  <!-- ─── Sheet Wien ──────────────────────────────────────────────────── -->
   <div class="card">
-    <h2>Live-Ergebnis</h2>
+    <h2>Live-Ergebnis Wien</h2>
     <iframe
       class="sheet-frame"
       src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTNx5KCMaGnTYMYQtSlUTCWYL8GspBS6R71EeVl1wfXL4hIsGpSf16z5EhyVzzf-j74G8db9Mr7VIG2/pubhtml?gid=1418262514&single=true&widget=true&headers=false"
@@ -392,127 +419,131 @@
   const RETRY_DELAY_MS   = 2000;
   const AUTO_REFRESH_MS  = 5 * 60 * 1000;
 
-  // Hinweis: Sheet hat 2 Header-Zeilen (Zeile 1 = Gesamt-Werte, Zeile 2 = "Day | Panda 1 | Goal | ...")
-  // Daten beginnen ab Zeile 3 → CSV-Index 2
   const PANDA_CONFIG = {
-    "all": { name: "Panda All", occCol: 7, targetCol: 8 },  // H, I
-    "1":   { name: "Panda 1",   occCol: 1, targetCol: 2 },  // B, C
-    "2":   { name: "Panda 2",   occCol: 3, targetCol: 4 },  // D, E
-    "3":   { name: "Panda 3",   occCol: 5, targetCol: 6 },  // F, G
+    "all": { name: "Panda All", occCol: 7, targetCol: 8 },
+    "1":   { name: "Panda 1",   occCol: 1, targetCol: 2 },
+    "2":   { name: "Panda 2",   occCol: 3, targetCol: 4 },
+    "3":   { name: "Panda 3",   occCol: 5, targetCol: 6 },
   };
 
   // ═══════════════════════════════════════════════════════════════════════
-  // SCRAPER TRIGGER
+  // SCRAPER TRIGGER — generisch für jede City
   // ═══════════════════════════════════════════════════════════════════════
-  const btn          = document.getElementById("triggerBtn");
-  const progressWrap = document.getElementById("progressWrap");
-  const progressFill = document.getElementById("progressFill");
-  const progressPct  = document.getElementById("progressPercent");
-  const progressStat = document.getElementById("progressStatus");
+  const cityState = {
+    wien: { pollInterval: null, fakeInterval: null, fakeProgress: 0 },
+    zh:   { pollInterval: null, fakeInterval: null, fakeProgress: 0 },
+  };
 
-  let pollInterval = null;
-  let fakeProgressInterval = null;
-  let fakeProgress = 0;
+  function $(id) { return document.getElementById(id); }
 
-  function setProgress(percent, statusText, statusClass = "") {
+  function setProgress(city, percent, statusText, statusClass = "") {
     const p = Math.max(0, Math.min(100, percent));
-    progressFill.style.width = p + "%";
-    progressPct.textContent  = Math.round(p) + "%";
-    progressStat.textContent = statusText;
-    progressStat.className   = "progress-status " + statusClass;
+    $(`progressFill_${city}`).style.width = p + "%";
+    $(`progressPercent_${city}`).textContent = Math.round(p) + "%";
+    const statusEl = $(`progressStatus_${city}`);
+    statusEl.textContent = statusText;
+    statusEl.className = "progress-status " + statusClass;
   }
 
-  function resetUI() {
+  function resetCity(city) {
+    const btn = document.querySelector(`.trigger-btn[data-city="${city}"]`);
     btn.disabled = false;
-    btn.querySelector("span").textContent = "Hole mir OCC Wien";
-    clearInterval(pollInterval);
-    clearInterval(fakeProgressInterval);
-    fakeProgress = 0;
+    btn.querySelector("span").textContent = city === "wien" ? "Hole mir OCC Wien" : "Hole mir OCC Zürich";
+    clearInterval(cityState[city].pollInterval);
+    clearInterval(cityState[city].fakeInterval);
+    cityState[city].fakeProgress = 0;
   }
 
-  async function triggerWorkflow() {
+  async function triggerWorkflow(city) {
+    const btn = document.querySelector(`.trigger-btn[data-city="${city}"]`);
     btn.disabled = true;
     btn.querySelector("span").textContent = "Läuft ...";
-    progressWrap.classList.add("active");
-    setProgress(2, "Sende Trigger an den Worker ...");
+    $(`progressWrap_${city}`).classList.add("active");
+    setProgress(city, 2, "Sende Trigger an den Worker ...");
 
     try {
-      const res = await fetch(`${WORKER_URL}/trigger`, { method: "POST" });
+      const res = await fetch(`${WORKER_URL}/trigger/${city}`, { method: "POST" });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || "Trigger fehlgeschlagen");
 
-      setProgress(8, "Workflow getriggert, warte auf Start ...");
+      setProgress(city, 8, "Workflow getriggert, warte auf Start ...");
       await new Promise(r => setTimeout(r, 4000));
 
-      const latestRes  = await fetch(`${WORKER_URL}/latest-run`);
+      const latestRes  = await fetch(`${WORKER_URL}/latest-run/${city}`);
       const latestData = await latestRes.json();
 
       if (latestData.ok && latestData.run) {
         const runId = latestData.run.id;
-        setProgress(12, `Run #${runId} läuft ...`);
-        startFakeProgress();
-        pollInterval = setInterval(() => pollRunStatus(runId), 5000);
+        setProgress(city, 12, `Run #${runId} läuft ...`);
+        startFakeProgress(city);
+        cityState[city].pollInterval = setInterval(() => pollRunStatus(city, runId), 5000);
       } else {
-        setProgress(10, "Run gestartet — Status nicht abrufbar. Sheet wird in ~2 Min aktualisiert.");
-        startFakeProgress();
+        setProgress(city, 10, "Run gestartet — Status nicht abrufbar. Sheet wird in ~2 Min aktualisiert.");
+        startFakeProgress(city);
       }
     } catch (err) {
       console.error(err);
-      setProgress(0, "Fehler: " + err.message, "error");
-      resetUI();
+      setProgress(city, 0, "Fehler: " + err.message, "error");
+      resetCity(city);
     }
   }
 
-  function startFakeProgress() {
-    fakeProgressInterval = setInterval(() => {
-      if (fakeProgress < 88) {
-        fakeProgress += 1.5;
-        const realPct = 12 + fakeProgress * 0.85;
-        progressFill.style.width = realPct + "%";
-        progressPct.textContent  = Math.round(realPct) + "%";
+  function startFakeProgress(city) {
+    cityState[city].fakeInterval = setInterval(() => {
+      if (cityState[city].fakeProgress < 88) {
+        cityState[city].fakeProgress += 1.5;
+        const realPct = 12 + cityState[city].fakeProgress * 0.85;
+        $(`progressFill_${city}`).style.width = realPct + "%";
+        $(`progressPercent_${city}`).textContent = Math.round(realPct) + "%";
       }
     }, 2000);
   }
 
-  async function pollRunStatus(runId) {
+  async function pollRunStatus(city, runId) {
     try {
       const res = await fetch(`${WORKER_URL}/run-status?id=${runId}`);
       const data = await res.json();
 
       if (data.status === "completed") {
-        clearInterval(pollInterval);
-        clearInterval(fakeProgressInterval);
+        clearInterval(cityState[city].pollInterval);
+        clearInterval(cityState[city].fakeInterval);
 
         if (data.conclusion === "success") {
-          setProgress(100, "✓ Scraping fertig — Daten sind im Sheet!", "success");
-          const iframe = document.querySelector(".sheet-frame");
-          iframe.src = iframe.src;
-          setTimeout(() => loadChartData(true), 3000);
+          setProgress(city, 100, "✓ Scraping fertig — Daten sind im Sheet!", "success");
+          if (city === "wien") {
+            const iframe = document.querySelector(".sheet-frame");
+            iframe.src = iframe.src;
+            setTimeout(() => loadChartData(true), 3000);
+          }
         } else {
-          setProgress(100, `✗ Workflow fehlgeschlagen: ${data.conclusion}`, "error");
+          setProgress(city, 100, `✗ Workflow fehlgeschlagen: ${data.conclusion}`, "error");
         }
-        setTimeout(resetUI, 4000);
+        setTimeout(() => resetCity(city), 4000);
       } else if (data.status === "in_progress") {
-        progressStat.textContent = "Scraper läuft ...";
+        $(`progressStatus_${city}`).textContent = "Scraper läuft ...";
       } else if (data.status === "queued") {
-        progressStat.textContent = "Warte in der Queue ...";
+        $(`progressStatus_${city}`).textContent = "Warte in der Queue ...";
       }
     } catch (e) {
       console.error("pollRunStatus error", e);
     }
   }
 
-  btn.addEventListener("click", triggerWorkflow);
+  // Beide Knöpfe verkabeln
+  document.querySelectorAll(".trigger-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      triggerWorkflow(btn.dataset.city);
+    });
+  });
 
   // ═══════════════════════════════════════════════════════════════════════
-  // GRAPH — Robuster Loader (ohne AbortController, das verursachte Probleme)
+  // GRAPH WIEN — wie vorher
   // ═══════════════════════════════════════════════════════════════════════
   let chartInstance = null;
   let sheetData = null;
   let currentPanda = "all";
   let autoRefreshTimer = null;
 
-  // Fetch mit Timeout via Promise.race (statt AbortController — der hatte den Bug)
   function fetchWithTimeout(url, timeoutMs) {
     return Promise.race([
       fetch(url, { cache: "no-store" }).then(res => {
@@ -536,9 +567,7 @@
       } catch (err) {
         lastErr = err;
         console.warn(`Versuch ${attempt}/${maxRetries} fehlgeschlagen:`, err.message);
-        if (attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
-        }
+        if (attempt < maxRetries) await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
       }
     }
     throw lastErr;
@@ -574,14 +603,11 @@
     return isNaN(n) ? null : n;
   }
 
-  // Zeigt den Rohwert aus der Zelle (z.B. "77,37%") direkt an, wenn möglich
   function displayCell(s) {
     if (s == null) return "—";
     const t = String(s).trim();
     if (t === "" || t === "-" || t === "#N/A") return "—";
-    // Wenn schon ein % drin ist, einfach so anzeigen
     if (t.includes("%")) return t;
-    // Sonst als Zahl mit % darstellen
     const n = parseValue(t);
     if (n == null) return t;
     return n.toFixed(2) + "%";
@@ -590,40 +616,30 @@
   function formatDate(s) {
     if (!s) return "";
     const t = String(s).trim();
-
-    // Format DD.MM.YYYY oder DD.MM.YY oder DD.MM (deutsches Format)
     let m = t.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?$/);
     if (m) {
       const dd = m[1].padStart(2, "0");
       const mm = m[2].padStart(2, "0");
       return `${dd}.${mm}`;
     }
-
-    // Format YYYY-MM-DD (ISO)
     m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (m) {
       const mm = m[2].padStart(2, "0");
       const dd = m[3].padStart(2, "0");
       return `${dd}.${mm}`;
     }
-
-    // Format MM/DD/YYYY oder DD/MM/YYYY (mit Slash)
     m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
     if (m) {
-      // Annahme: deutsches Format DD/MM/YYYY
       const dd = m[1].padStart(2, "0");
       const mm = m[2].padStart(2, "0");
       return `${dd}.${mm}`;
     }
-
-    // Fallback: Date-Parser
     const d = new Date(t);
     if (!isNaN(d.getTime())) {
       const dd = String(d.getDate()).padStart(2, "0");
       const mm = String(d.getMonth() + 1).padStart(2, "0");
       return `${dd}.${mm}`;
     }
-
     return t;
   }
 
@@ -631,12 +647,12 @@
     const d = new Date();
     const hh = String(d.getHours()).padStart(2, "0");
     const mm = String(d.getMinutes()).padStart(2, "0");
-    document.getElementById("lastUpdated").textContent = `Aktualisiert: ${hh}:${mm} Uhr`;
+    $("lastUpdated").textContent = `Aktualisiert: ${hh}:${mm} Uhr`;
   }
 
   function showChartMessage(html, cls) {
-    const messageEl = document.getElementById("chartMessage");
-    const canvasEl  = document.getElementById("occChart");
+    const messageEl = $("chartMessage");
+    const canvasEl  = $("occChart");
     messageEl.innerHTML = html;
     messageEl.className = "chart-message " + cls;
     messageEl.style.display = "block";
@@ -644,7 +660,7 @@
   }
 
   async function loadChartData(silent = false) {
-    const refreshBtn = document.getElementById("refreshBtn");
+    const refreshBtn = $("refreshBtn");
     refreshBtn.classList.add("loading");
     refreshBtn.disabled = true;
 
@@ -674,7 +690,7 @@
     refreshBtn.disabled = false;
     showChartMessage(
       `Fehler beim Laden: ${lastErr ? lastErr.message : "Unbekannter Fehler"}
-       <small>Pr&uuml;fe deine Internet-Verbindung oder ob das Sheet &ouml;ffentlich freigegeben ist.</small>
+       <small>Pr&uuml;fe Internet oder Sheet-Freigabe.</small>
        <button class="retry-btn" onclick="loadChartData()">Erneut versuchen</button>`,
       "chart-error"
     );
@@ -684,16 +700,10 @@
     const cfg = PANDA_CONFIG[pandaKey];
     if (!cfg || !sheetData) return;
 
-    // ─── STATS aus Zeile 1 (Index 0) holen ─────────────────────────
-    // Zeile 1 = "Gesamt | 77,37% | 90,00% | ..."
     const summaryRow = sheetData[0] || [];
-    const summaryOcc    = summaryRow[cfg.occCol];
-    const summaryTarget = summaryRow[cfg.targetCol];
+    $("statAvgOcc").textContent    = displayCell(summaryRow[cfg.occCol]);
+    $("statAvgTarget").textContent = displayCell(summaryRow[cfg.targetCol]);
 
-    document.getElementById("statAvgOcc").textContent    = displayCell(summaryOcc);
-    document.getElementById("statAvgTarget").textContent = displayCell(summaryTarget);
-
-    // ─── Tagesdaten ab Zeile 3 (Index 2) ───────────────────────────
     const labels = [];
     const occData = [];
     const targetData = [];
@@ -701,22 +711,16 @@
     for (let i = 2; i < Math.min(sheetData.length, 64); i++) {
       const row = sheetData[i] || [];
       const dateCell = row[0];
-      const occCell  = row[cfg.occCol];
-      const tgtCell  = row[cfg.targetCol];
-
-      const occVal = parseValue(occCell);
-      const tgtVal = parseValue(tgtCell);
-
+      const occVal = parseValue(row[cfg.occCol]);
+      const tgtVal = parseValue(row[cfg.targetCol]);
       if (!dateCell || (occVal == null && tgtVal == null)) continue;
-
       labels.push(formatDate(dateCell));
       occData.push(occVal);
       targetData.push(tgtVal);
     }
 
-    // Chart anzeigen
-    document.getElementById("chartMessage").style.display = "none";
-    const canvasEl = document.getElementById("occChart");
+    $("chartMessage").style.display = "none";
+    const canvasEl = $("occChart");
     canvasEl.style.display = "block";
 
     if (chartInstance) chartInstance.destroy();
@@ -737,10 +741,8 @@
             borderColor: "#f4c542",
             backgroundColor: gradient,
             borderWidth: 2.5,
-            fill: true,
-            tension: 0.35,
-            pointRadius: 0,
-            pointHoverRadius: 6,
+            fill: true, tension: 0.35,
+            pointRadius: 0, pointHoverRadius: 6,
             pointHoverBackgroundColor: "#f4c542",
             pointHoverBorderColor: "#0a0e1a",
             pointHoverBorderWidth: 2,
@@ -750,12 +752,9 @@
             data: targetData,
             borderColor: "#60a5fa",
             backgroundColor: "transparent",
-            borderWidth: 2,
-            borderDash: [6, 4],
-            fill: false,
-            tension: 0.35,
-            pointRadius: 0,
-            pointHoverRadius: 5,
+            borderWidth: 2, borderDash: [6, 4],
+            fill: false, tension: 0.35,
+            pointRadius: 0, pointHoverRadius: 5,
             pointHoverBackgroundColor: "#60a5fa",
             pointHoverBorderColor: "#0a0e1a",
             pointHoverBorderWidth: 2,
@@ -772,18 +771,14 @@
             labels: {
               color: "#e8ecf5",
               font: { family: "JetBrains Mono", size: 12 },
-              usePointStyle: true,
-              pointStyle: "line",
-              boxWidth: 30,
-              padding: 16,
+              usePointStyle: true, pointStyle: "line",
+              boxWidth: 30, padding: 16,
             }
           },
           tooltip: {
             backgroundColor: "#111827",
-            borderColor: "#2a3349",
-            borderWidth: 1,
-            titleColor: "#f4c542",
-            bodyColor: "#e8ecf5",
+            borderColor: "#2a3349", borderWidth: 1,
+            titleColor: "#f4c542", bodyColor: "#e8ecf5",
             titleFont: { family: "JetBrains Mono", size: 13, weight: "700" },
             bodyFont:  { family: "JetBrains Mono", size: 12 },
             padding: 12,
@@ -801,10 +796,8 @@
             ticks: {
               color: "#8a93ad",
               font: { family: "JetBrains Mono", size: 10 },
-              maxRotation: 60,
-              minRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 12,
+              maxRotation: 60, minRotation: 0,
+              autoSkip: true, maxTicksLimit: 12,
             },
             grid: { color: "rgba(42, 51, 73, 0.4)" }
           },
@@ -832,15 +825,11 @@
     });
   });
 
-  document.getElementById("refreshBtn").addEventListener("click", () => {
-    loadChartData();
-  });
+  $("refreshBtn").addEventListener("click", () => loadChartData());
 
   function startAutoRefresh() {
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-    autoRefreshTimer = setInterval(() => {
-      loadChartData(true);
-    }, AUTO_REFRESH_MS);
+    autoRefreshTimer = setInterval(() => loadChartData(true), AUTO_REFRESH_MS);
   }
 
   document.addEventListener("visibilitychange", () => {
