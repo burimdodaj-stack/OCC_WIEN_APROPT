@@ -15,8 +15,8 @@ from bs4 import BeautifulSoup
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
 ADMIN_URL   = "https://pandaparken.work/admin"
-USERNAME    = os.environ.get("PANDA_USER", "Burim")
-PASSWORD    = os.environ.get("PANDA_PASS", "2019Parken@")
+USERNAME    = os.environ["PANDA_USER"]   # MUSS als GitHub Secret gesetzt sein
+PASSWORD    = os.environ["PANDA_PASS"]   # MUSS als GitHub Secret gesetzt sein
 
 SHEET_ID    = "1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0"
 SHEET_NAME  = "SpezoällOCCVIE"
