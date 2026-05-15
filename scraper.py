@@ -1,9 +1,12 @@
 """
 PandaParken Occupancy Scraper - Aktueller + Nächster Monat -> Google Sheets
 ===========================================================================
-1. Liest zuerst die Capacity-Tabellen des AKTUELLEN Monats
-2. Klickt dann auf "Next Month" und liest die Tabellen des NÄCHSTEN Monats
-3. Schreibt beides untereinander in dasselbe Tabellenblatt
+1. Login auf pandaparken.work/admin (Username + Passwort)
+2. Nach Login: direkt zu pandaparken.work/capacity navigieren
+3. Capacity-Tabellen (Panda 1-4) des AKTUELLEN Monats lesen
+4. Ganz nach unten scrollen → "Next Month" Link klicken
+5. Capacity-Tabellen des NÄCHSTEN Monats lesen
+6. Alles in Google Sheets (Tab "SpezoällOCCVIE") schreiben
 """
 
 import os
@@ -14,12 +17,14 @@ from google.oauth2.service_account import Credentials
 from bs4 import BeautifulSoup
 
 # ── Konfiguration ──────────────────────────────────────────────────────────────
-ADMIN_URL   = "https://pandaparken.work/admin"
-USERNAME    = os.environ["PANDA_USER"]   # MUSS als GitHub Secret gesetzt sein
-PASSWORD    = os.environ["PANDA_PASS"]   # MUSS als GitHub Secret gesetzt sein
+ADMIN_URL    = "https://pandaparken.work/admin"
+CAPACITY_URL = "https://pandaparken.work/capacity"
 
-SHEET_ID    = "1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0"
-SHEET_NAME  = "SpezoällOCCVIE"
+USERNAME     = os.environ["PANDA_USER"]   # GitHub Secret
+PASSWORD     = os.environ["PANDA_PASS"]   # GitHub Secret
+
+SHEET_ID     = "1Xq1GG4f_2pjZn2-H0qZsGwMCbdgdDyQrPyrBcTeSmv0"
+SHEET_NAME   = "SpezoällOCCVIE"
 
 SERVICE_ACCOUNT_FILE = "credentials.json"
 
@@ -30,7 +35,6 @@ SCOPES = [
 
 PANDA_SECTIONS = ["Panda 1", "Panda 2", "Panda 3", "Panda 4"]
 
-# Start-Zeilen für AKTUELLEN Monat (Block 1)
 CURRENT_MONTH_START_ROWS = {
     "Panda 1": 1,
     "Panda 2": 40,
@@ -38,8 +42,6 @@ CURRENT_MONTH_START_ROWS = {
     "Panda 4": 118,
 }
 
-# Start-Zeilen für NÄCHSTEN Monat (Block 2) - direkt darunter
-# Block 1 endet bei Zeile ~157, also Block 2 ab Zeile 160 mit etwas Abstand
 NEXT_MONTH_START_ROWS = {
     "Panda 1": 160,
     "Panda 2": 199,
@@ -56,22 +58,8 @@ CAPACITY_IDS = {
 # ──────────────────────────────────────────────────────────────────────────────
 
 
-def login(page):
-    print("▶ Öffne Login-Seite ...")
-    page.goto(ADMIN_URL, wait_until="networkidle", timeout=30000)
-    time.sleep(2)
-
-    page.fill('input[placeholder="Username"]', USERNAME)
-    page.fill('input[placeholder="Password"]', PASSWORD)
-    page.click('button:has-text("Login")')
-
-    page.wait_for_load_state("networkidle", timeout=20000)
-    time.sleep(2)
-    print("  ✓ Eingeloggt")
-
-
 def save_debug(page, label):
-    """Speichert Screenshot + HTML, damit wir bei Fehlern sehen was los war."""
+    """Speichert Screenshot + HTML bei Fehlern."""
     try:
         os.makedirs("debug", exist_ok=True)
         page.screenshot(path=f"debug/{label}.png", full_page=True)
@@ -82,100 +70,33 @@ def save_debug(page, label):
         print(f"  ! Debug-Speichern fehlgeschlagen: {e}")
 
 
-def navigate_to_capacity(page):
-    print("▶ Navigiere zu Parking Capacity ...")
-
-    # Debug: was ist nach Login auf der Seite?
-    save_debug(page, "01_after_login")
-
-    # ──────────────────────────────────────────────────────────────
-    # WICHTIG: Sidebar könnte eingeklappt sein (nur Icons sichtbar).
-    # Erst das Hamburger-Menü ☰ klicken, um sie aufzuklappen.
-    # ──────────────────────────────────────────────────────────────
-    print("  → Prüfe ob Sidebar aufgeklappt werden muss ...")
-    hamburger_selectors = [
-        'button[aria-label*="menu" i]',
-        'a.sidebar-toggle',
-        'button.sidebar-toggle',
-        '.sidebar-toggle',
-        'a:has(i.fa-bars)',
-        'button:has(i.fa-bars)',
-        '[data-toggle="collapsed"]',
-        'a[href="#"]:has(i.fa-bars)',
-    ]
-
-    for sel in hamburger_selectors:
-        try:
-            el = page.locator(sel).first
-            if el.is_visible(timeout=1500):
-                el.click(timeout=3000)
-                print(f"  ✓ Sidebar-Toggle geklickt ({sel})")
-                time.sleep(1)
-                break
-        except Exception:
-            continue
-
-    save_debug(page, "02_after_sidebar_toggle")
-
-    # Versuche mehrere Strategien für "Parking"
-    parking_clicked = False
-    strategies = [
-        ('a:has-text("Parking")', "link mit Text Parking"),
-        ('text="Parking"', "exact text Parking"),
-        ('text=/^\\s*Parking\\s*$/', "regex Parking"),
-        ('li:has-text("Parking") > a', "li > a Parking"),
-        ('[href*="parking" i]', "href contains parking"),
-        ('button:has-text("Parking")', "button Parking"),
-    ]
-
-    for selector, desc in strategies:
-        try:
-            print(f"  → Versuche: {desc}")
-            page.locator(selector).first.click(timeout=5000)
-            print(f"  ✓ Geklickt mit: {desc}")
-            parking_clicked = True
-            break
-        except Exception as e:
-            print(f"    × {type(e).__name__}")
-
-    if not parking_clicked:
-        save_debug(page, "03_parking_not_found")
-        raise RuntimeError("Konnte 'Parking' im Menü nicht finden — siehe debug/")
-
+def login(page):
+    """Schritt 1: Login auf pandaparken.work/admin."""
+    print("▶ Öffne Login-Seite ...")
+    page.goto(ADMIN_URL, wait_until="networkidle", timeout=30000)
     time.sleep(2)
-    save_debug(page, "04_after_parking_click")
 
-    # Versuche "Parking Capacity (v2 preview)"
-    capacity_clicked = False
-    capacity_strategies = [
-        ('a:has-text("Parking Capacity (v2 preview)")', "exact link"),
-        ('text="Parking Capacity (v2 preview)"', "exact text"),
-        ('a:has-text("Parking Capacity")', "Parking Capacity link"),
-        ('text=/Parking Capacity.*v2/i', "regex v2"),
-        ('text=/Parking Capacity/i', "any Parking Capacity"),
-    ]
-
-    for selector, desc in capacity_strategies:
-        try:
-            print(f"  → Versuche Capacity: {desc}")
-            page.locator(selector).first.click(timeout=5000)
-            print(f"  ✓ Capacity geklickt mit: {desc}")
-            capacity_clicked = True
-            break
-        except Exception as e:
-            print(f"    × {type(e).__name__}")
-
-    if not capacity_clicked:
-        save_debug(page, "05_capacity_not_found")
-        raise RuntimeError("Konnte 'Parking Capacity' nicht finden — siehe debug/")
+    page.fill('input[placeholder="Username"]', USERNAME)
+    page.fill('input[placeholder="Password"]', PASSWORD)
+    page.click('button:has-text("Login")')
 
     page.wait_for_load_state("networkidle", timeout=20000)
+    time.sleep(2)
+    save_debug(page, "00_after_login")
+    print("  ✓ Eingeloggt")
+
+
+def navigate_to_capacity(page):
+    """Schritt 2: Nach Login direkt zu /capacity."""
+    print(f"▶ Navigiere direkt zu {CAPACITY_URL} ...")
+    page.goto(CAPACITY_URL, wait_until="networkidle", timeout=30000)
     time.sleep(4)
-    save_debug(page, "06_capacity_page")
+    save_debug(page, "01_capacity_page")
     print("  ✓ Capacity-Seite geladen")
 
 
 def click_next_month(page):
+    """Schritt 4: Scrollt nach unten und klickt auf 'Next Month'."""
     print("▶ Scrolle nach unten und klicke auf 'Next Month' ...")
 
     old_html = page.content()
@@ -183,11 +104,29 @@ def click_next_month(page):
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     time.sleep(2)
 
-    next_month_link = page.locator("text=Next Month").first
-    next_month_link.wait_for(timeout=10000)
-    next_month_link.scroll_into_view_if_needed()
-    time.sleep(1)
-    next_month_link.click()
+    next_month_strategies = [
+        'a:has-text("Next Month")',
+        'text="Next Month"',
+        'button:has-text("Next Month")',
+    ]
+
+    clicked = False
+    for sel in next_month_strategies:
+        try:
+            el = page.locator(sel).first
+            el.wait_for(timeout=5000)
+            el.scroll_into_view_if_needed()
+            time.sleep(1)
+            el.click()
+            print(f"  ✓ Geklickt mit: {sel}")
+            clicked = True
+            break
+        except Exception as e:
+            print(f"    × {sel}: {type(e).__name__}")
+
+    if not clicked:
+        save_debug(page, "02_next_month_not_found")
+        raise RuntimeError("Konnte 'Next Month' nicht klicken — siehe debug/")
 
     time.sleep(2)
 
@@ -202,15 +141,12 @@ def click_next_month(page):
 
     page.wait_for_load_state("networkidle", timeout=20000)
     time.sleep(4)
-
+    save_debug(page, "03_next_month_page")
     print("  ✓ Nächster Monat geladen")
 
 
 def parse_tbody_by_id(html: str, tbody_id: str) -> list:
-    """
-    Liest Zeilen aus einem <tbody id='capacity_X'>.
-    Die ID sitzt auf tbody, nicht auf table.
-    """
+    """Liest Zeilen aus einem <tbody id='capacity_X'>."""
     soup = BeautifulSoup(html, "html.parser")
 
     tbody = soup.find("tbody", {"id": tbody_id})
@@ -298,13 +234,15 @@ def main():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1920, "height": 1080})
 
-        # Login & Navigation
+        # 1. Login auf /admin
         login(page)
+
+        # 2. Direkt zu /capacity (Session ist nach Login aktiv)
         navigate_to_capacity(page)
 
-        # ═══ SCHRITT 1: AKTUELLER MONAT ═══
+        # ═══ AKTUELLER MONAT ═══
         print("\n══════════════════════════════════════")
-        print("  SCHRITT 1: AKTUELLER MONAT")
+        print("  AKTUELLER MONAT")
         print("══════════════════════════════════════")
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(2)
@@ -312,43 +250,39 @@ def main():
         time.sleep(1)
         current_data = extract_all_data(page)
 
-        # ═══ SCHRITT 2: NÄCHSTER MONAT ═══
+        # ═══ NÄCHSTER MONAT ═══
         print("\n══════════════════════════════════════")
-        print("  SCHRITT 2: NÄCHSTER MONAT")
+        print("  NÄCHSTER MONAT")
         print("══════════════════════════════════════")
         click_next_month(page)
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(2)
+        page.evaluate("window.scrollTo(0, 0)")
+        time.sleep(1)
         next_data = extract_all_data(page)
 
         browser.close()
 
-    # ═══ SCHRITT 3: ALLES IN GOOGLE SHEETS SCHREIBEN ═══
+    # ═══ IN GOOGLE SHEETS SCHREIBEN ═══
     print("\n══════════════════════════════════════")
-    print("  SCHRITT 3: SCHREIBE IN GOOGLE SHEETS")
+    print("  SCHREIBE IN GOOGLE SHEETS")
     print("══════════════════════════════════════")
     worksheet.clear()
 
-    # Block 1: Aktueller Monat
     print("\n▶ Block 1: Aktueller Monat")
     for name in PANDA_SECTIONS:
         if name in current_data:
             write_to_sheet(
-                worksheet,
-                name,
-                current_data[name],
-                CURRENT_MONTH_START_ROWS[name],
-                "Aktueller Monat"
+                worksheet, name, current_data[name],
+                CURRENT_MONTH_START_ROWS[name], "Aktueller Monat"
             )
 
-    # Block 2: Nächster Monat
     print("\n▶ Block 2: Nächster Monat")
     for name in PANDA_SECTIONS:
         if name in next_data:
             write_to_sheet(
-                worksheet,
-                name,
-                next_data[name],
-                NEXT_MONTH_START_ROWS[name],
-                "Nächster Monat"
+                worksheet, name, next_data[name],
+                NEXT_MONTH_START_ROWS[name], "Nächster Monat"
             )
 
     print("\n✅ Fertig!")
