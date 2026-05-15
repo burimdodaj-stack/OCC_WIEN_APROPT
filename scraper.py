@@ -185,7 +185,7 @@ def write_to_sheet(worksheet, section_name: str, data: dict, start_row: int, mon
     worksheet.update(
         range_name=cell_range,
         values=to_write,
-        value_input_option="RAW"
+        value_input_option="USER_ENTERED"
     )
     print(f"  ✓ {section_name} ({month_label}) -> {len(data_rows)} Datenzeilen -> {cell_range}")
 
