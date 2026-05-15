@@ -35,7 +35,7 @@
     padding: 40px 20px;
   }
   .container { width: 100%; max-width: 1000px; }
-  header { margin-bottom: 40px; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+  header { margin-bottom: 32px; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
   .eyebrow {
     font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
     color: var(--accent); margin-bottom: 12px;
@@ -43,10 +43,32 @@
   h1 {
     font-family: "Fraunces", serif; font-weight: 800;
     font-size: clamp(34px, 6vw, 56px); line-height: 1.05;
-    margin: 0 0 12px 0; letter-spacing: -0.02em;
+    margin: 0; letter-spacing: -0.02em;
+    display: flex; align-items: center; gap: 18px;
+    flex-wrap: wrap;
   }
-  h1 em { font-style: italic; color: var(--accent); font-weight: 400; }
-  .subtitle { color: var(--muted); font-size: 14px; max-width: 520px; }
+  .panda-logo {
+    width: clamp(48px, 8vw, 72px);
+    height: clamp(48px, 8vw, 72px);
+    flex-shrink: 0;
+  }
+  .panda-logo .circle {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 4;
+  }
+  .panda-logo .ear {
+    fill: var(--ink);
+  }
+  .panda-logo .eye, .panda-logo .nose {
+    fill: var(--ink);
+  }
+  .panda-logo .mouth {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
   .card {
     background: var(--panel); border: 1px solid var(--line);
     border-radius: 4px; padding: 32px; margin-bottom: 24px;
@@ -258,8 +280,26 @@
 
   <header>
     <div class="eyebrow">PandaParken · Occupancy Dashboard</div>
-    <h1>OCC <em>Wien</em></h1>
-    <p class="subtitle">Scraped automatisch den aktuellen und nächsten Monat aus dem Admin-Panel und schreibt die Daten direkt in dein Google Sheet.</p>
+    <h1>
+      <span>OCC</span>
+      <svg class="panda-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Panda Parken Logo">
+        <!-- Ohren -->
+        <circle class="ear" cx="22" cy="22" r="11" />
+        <circle class="ear" cx="78" cy="22" r="11" />
+        <!-- Kopf -->
+        <circle class="circle" cx="50" cy="55" r="36" />
+        <!-- Augen-Patches (gefüllt) -->
+        <ellipse class="eye" cx="36" cy="50" rx="7" ry="9" transform="rotate(-15 36 50)" />
+        <ellipse class="eye" cx="64" cy="50" rx="7" ry="9" transform="rotate(15 64 50)" />
+        <!-- Augen-Highlights (klein, weiß) -->
+        <circle cx="37" cy="49" r="2.2" fill="#0a0e1a" />
+        <circle cx="63" cy="49" r="2.2" fill="#0a0e1a" />
+        <!-- Nase -->
+        <ellipse class="nose" cx="50" cy="65" rx="4" ry="3" />
+        <!-- Mund -->
+        <path class="mouth" d="M 46 71 Q 50 76 54 71" />
+      </svg>
+    </h1>
   </header>
 
   <div class="card">
